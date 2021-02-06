@@ -1,6 +1,10 @@
+import React, {useState, useEffect} from 'react';
+
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
+//Components
+import Button from './components/Button'
 
 firebase.initializeApp({
     apiKey: "AIzaSyB7wUeA1RsnI4Hi_bGV5c39MZuFAXVUpL0",
@@ -11,10 +15,52 @@ firebase.initializeApp({
     appId: "1:762191356819:web:5e91bc16d4b6414b96fe66"
 });
 
+const auth = firebase.auth();
+
 function App() {
+  const [user, setUser] = useState(() => auth.currentUser);
+  const [initializing, setInitializing] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user){
+        setUser(user);
+      }else{
+        setUser(null);
+      }
+      if (initializing){
+        setInitializing(false);
+      }
+    });
+    //Clean up subscription
+    return unsubscribe;
+  }, [])
+
+  const signInWithGoogle = async () => {
+
+    //Get Google provider object
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    //Set language to the default browser preference
+    auth.useDeviceLanguage();
+
+    //Start sign in process
+    try{
+      await auth.signInWithPopup(provider);
+    } catch(error){
+      console.error(error);
+    }
+  };
+
+  if (initializing) return "Loading..."
+
   return (
     <div>
-      <h1>Hello World!</h1>
+      {user ? (
+        'Welcome to the chat'
+      ): (
+        <Button onClick={signInWithGoogle}>Sign in with Google</Button>
+      )}
     </div>
   );
 }
