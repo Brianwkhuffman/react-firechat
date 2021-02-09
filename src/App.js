@@ -5,6 +5,8 @@ import 'firebase/auth';
 import 'firebase/firestore';
 //Components
 import Button from './components/Button'
+import Channel from './components/Channel'
+import UserInput from './components/UserInput'
 
 firebase.initializeApp({
     apiKey: "AIzaSyB7wUeA1RsnI4Hi_bGV5c39MZuFAXVUpL0",
@@ -16,12 +18,13 @@ firebase.initializeApp({
 });
 
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 function App() {
   const [user, setUser] = useState(() => auth.currentUser);
   const [initializing, setInitializing] = useState(true);
-
-  useEffect(() => {
+  
+useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user){
         setUser(user);
@@ -34,16 +37,13 @@ function App() {
     });
     //Clean up subscription
     return unsubscribe;
-  }, [])
+  }, [db])
 
   const signInWithGoogle = async () => {
-
     //Get Google provider object
     const provider = new firebase.auth.GoogleAuthProvider();
-
     //Set language to the default browser preference
     auth.useDeviceLanguage();
-
     //Start sign in process
     try{
       await auth.signInWithPopup(provider);
@@ -52,12 +52,24 @@ function App() {
     }
   };
 
+  const signOut = async () => {
+    try {
+      await firebase.auth().signOut();
+    }catch (error){
+      console.log(error.message);
+    }
+  };
+
   if (initializing) return "Loading..."
 
   return (
     <div>
       {user ? (
-        'Welcome to the chat'
+        <>
+        <Button onClick={signOut}>Sign out</Button>
+        <Channel user={user} db={db}/>
+        <UserInput user={user} db={db}/>
+        </>
       ): (
         <Button onClick={signInWithGoogle}>Sign in with Google</Button>
       )}
